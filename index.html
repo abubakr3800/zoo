@@ -303,21 +303,95 @@ function validateAgainstAvoid(cond, cct, lux, cri, glareFlag){
 /* =========================
    Main UI update
    ========================= */
-function updateSimulation(){
+
+   function updateSimulation() {
   const cct = Number(tempSlider.value);
   const lux = Number(luxSlider.value);
   const cri = Number(criSlider.value);
   const glareFlag = Number(glareSelect.value);
 
-  // display numeric labels
   tempSpan.textContent = `${cct}K`;
   luxSpan.textContent = `${lux} lx`;
   criSpan.textContent = `${cri}`;
 
+  const cond = lightingData[selectedAnimal]?.lighting_conditions[selectedModeIndex];
+  if (!cond) return;
+
+  // Set default colors
+  tempSpan.className = "stat-pill";
+  luxSpan.className = "stat-pill";
+  criSpan.className = "stat-pill";
+  glareSelect.classList.remove("border-danger");
+
+  // =======================
+  // 1. Range comparison (safe values)
+  // =======================
+  if (cct < cond.CCT_K.min || cct > cond.CCT_K.max) {
+    tempSpan.classList.add("value-bad");
+  } else {
+    tempSpan.classList.add("value-ok");
+  }
+
+  if (lux < cond.illuminance_lux.min || lux > cond.illuminance_lux.max) {
+    luxSpan.classList.add("value-bad");
+  } else {
+    luxSpan.classList.add("value-ok");
+  }
+
+  if (cri < cond.CRI_Ra.min || cri > cond.CRI_Ra.max) {
+    criSpan.classList.add("value-bad");
+  } else {
+    criSpan.classList.add("value-ok");
+  }
+
+  // =======================
+  // 2. Avoid pattern checks
+  // =======================
+  const avoidDiv = document.getElementById("avoidRules");
+  avoidDiv.innerHTML = "";
+  let avoidTriggered = 0;
+
+  for (const [key, rule] of Object.entries(cond.avoid)) {
+    let valueToCheck = null;
+    const k = key.toLowerCase();
+
+    if (k.includes("blue")) valueToCheck = cct;
+    if (k.includes("lux") || k.includes("lighting_changes")) valueToCheck = lux;
+    if (k.includes("cri") || k.includes("flicker")) valueToCheck = cri;
+    if (k.includes("point") || k.includes("glare") || k.includes("shadows")) valueToCheck = glareFlag;
+
+    if (valueToCheck !== null && valueToCheck >= rule.min && valueToCheck <= rule.max) {
+      avoidTriggered++;
+      const p = document.createElement("p");
+      p.className = "avoid-rule text-danger";
+      p.innerHTML = `<strong>${key}</strong>: ${rule.description} 
+        <span class="meta">(You: ${valueToCheck}, Avoid: ${rule.min}–${rule.max})</span>`;
+      avoidDiv.appendChild(p);
+
+      // turn matching value red
+      if (k.includes("blue")) tempSpan.classList.add("value-bad");
+      if (k.includes("lux")) luxSpan.classList.add("value-bad");
+      if (k.includes("cri") || k.includes("flicker")) criSpan.classList.add("value-bad");
+      if (k.includes("glare") || k.includes("point") || k.includes("shadows")) glareSelect.classList.add("border-danger");
+    }
+  }
+
+  if (avoidTriggered === 0) {
+    avoidDiv.innerHTML = `<p class="meta">No avoid patterns triggered.</p>`;
+  }
+
+  // =======================
+  // Apply visual effects
+  // =======================
+  applyVisualFilters(cct, lux, cri, glareFlag);
+
+  // Update activity info
+  activityLevel.textContent = `Activity: ${cond.activity}`;
+  healthImpact.textContent = `Target CCT: ${cond.CCT_K.min}–${cond.CCT_K.max} K`;
+  stressLevel.textContent = avoidTriggered > 0 ? "Stress: High" : "Stress: Low";
+  
   // find current condition
   const conditions = lightingData[selectedAnimal]?.lighting_conditions ?? [];
-  const cond = conditions[selectedModeIndex] ?? null;
-
   // set background image (prefer cond.image)
   let bgImage = '';
   if (cond && cond.image) bgImage = cond.image;
@@ -330,56 +404,9 @@ function updateSimulation(){
     else bgImage = 'images/lion/gif/default.gif';
   }
   enclosure.style.backgroundImage = `url("${bgImage}")`;
-
-  // apply visual effects
-  applyVisualFilters(cct, lux, cri, glareFlag);
-
-  // check avoid rules
-  const violations = validateAgainstAvoid(cond, cct, lux, cri, glareFlag);
-
-  // reset value styles
-  tempSpan.className = 'stat-pill';
-  luxSpan.className = 'stat-pill';
-  criSpan.className = 'stat-pill';
-  glareSelect.classList.remove('border-danger');
-
-  avoidRulesDiv.innerHTML = '';
-  violationsSummary.textContent = '';
-
-  if (violations.length === 0) {
-    avoidRulesDiv.innerHTML = '<p class="meta">No rules triggered — current settings are within allowed ranges for this mode.</p>';
-  } else {
-    // summarize and highlight offending controls
-    violations.forEach(v => {
-      const div = document.createElement('div');
-      div.className = 'avoid-rule';
-      const title = document.createElement('div');
-      title.className = 'rule-title';
-      title.textContent = `${v.key} — actual: ${v.actual} (allowed: ${v.min ?? '-'} to ${v.max ?? '-'})`;
-      const desc = document.createElement('div');
-      desc.className = 'rule-desc';
-      desc.textContent = v.description || '';
-      div.appendChild(title);
-      div.appendChild(desc);
-      avoidRulesDiv.appendChild(div);
-
-      // decide which control to highlight
-      const k = v.key.toLowerCase();
-      if (k.includes('cct') || k.includes('blue')) tempSpan.className = 'stat-pill value-bad';
-      if (k.includes('lux') || k.includes('lighting_changes')) luxSpan.className = 'stat-pill value-bad';
-      if (k.includes('cri') || k.includes('flicker')) criSpan.className = 'stat-pill value-bad';
-      if (k.includes('glare') || k.includes('point') || k.includes('shadows')) glareSelect.classList.add('border-danger');
-    });
-
-    violationsSummary.textContent = `${violations.length} violation(s) detected — adjust sliders to clear them.`;
-  }
-
-  // update short status texts
-  activityLevel.textContent = `Activity: ${cond?.activity ?? '—'}`;
-  healthImpact.textContent = `CCT target: ${cond?.CCT_K?.min ?? '—'} — ${cond?.CCT_K?.max ?? '—'} K`;
-  stressLevel.textContent = violations.length ? 'Stress: Elevated' : 'Stress: Low';
 }
 
+   
 /* =========================
    Event wiring
    ========================= */
