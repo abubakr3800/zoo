@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoo Lighting Impact Simulator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .enclosure {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background-size: cover;
+      background-position: center;
+      filter: brightness(1) contrast(1) sepia(0);
+      border-radius: 10px;
+      transition: filter 0.3s ease, background-image 0.3s ease;
+    }
+    .overlay-day { background: rgba(255,255,255,0.0); }
+    .overlay-night { background: rgba(0,0,50,0.4); }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+    }
+
+    /* Light direction visual effect */
+    .enclosure.direct-light::before,
+.enclosure.indirect-light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: background 0.6s ease;
+}
+
+/* Direct light — daytime (warm golden) */
+.enclosure.direct-light.morning-light::before {
+  background: radial-gradient(circle at 80% 20%, rgba(255, 230, 150, 0.6) 0%, rgba(255, 230, 150, 0.1) 40%, transparent 70%);
+}
+
+/* Direct light — night (cool moonlight) */
+.enclosure.direct-light.night-light::before {
+  background: radial-gradient(circle at 20% 20%, rgba(180, 200, 255, 0.5) 0%, rgba(180, 200, 255, 0.1) 40%, transparent 70%);
+}
+
+/* Indirect light — daytime (warm soft glow) */
+.enclosure.indirect-light.morning-light::before {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 220, 0.4) 0%, rgba(255, 255, 220, 0.15) 50%, transparent 100%);
+}
+
+/* Indirect light — night (cool soft glow) */
+.enclosure.indirect-light.night-light::before {
+  background: radial-gradient(circle at 50% 50%, rgba(200, 220, 255, 0.3) 0%, rgba(200, 220, 255, 0.12) 50%, transparent 100%);
+}
+
+  </style>
+</head>
+<body class="bg-dark text-white">
+<div class="container py-4">
+  <h1 class="mb-4 text-center">Zoo Lighting Impact Simulator</h1>
+
+  <div class="row g-4">
+    <!-- Simulation Area -->
+    <div class="col-md-4">
+      <div id="enclosure" class="enclosure">
+        <div id="overlay" class="overlay overlay-day"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body bg-secondary text-white">
+          <h5>Lighting Controls</h5>
+
+          <label class="form-label mt-2">Animal</label>
+          <select id="animalSelect" class="form-select">
+            <option value="lion">Lion</option>
+            <option value="owl">Owl</option>
+          </select>
+
+          <div>
+            <label class="form-label mt-3">Color Temperature (K): 
+              <span id="tempValue">3500</span>
+            </label>
+            <input type="range" min="2500" max="5000" value="3500" step="100" id="tempSlider" class="form-range">
+            <small id="tempReason" class="text-danger"></small>
+          </div>
+          
+          <div>
+            <label class="form-label mt-3">Lux Level: 
+              <span id="luxValue">200</span>
+              </label>
+            <input type="range" min="50" max="400" value="200" step="10" id="luxSlider" class="form-range">
+            <small id="luxReason" class="text-danger"></small>
+          </div>
+          
+          <div>
+            <label class="form-label mt-3">CRI: 
+              <span id="criValue">80</span>
+            </label>
+            <input type="range" min="60" max="100" value="80" step="1" id="criSlider" class="form-range">
+            <small id="criReason" class="text-danger"></small>
+          </div>
+          
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="dayNightToggle">
+            <label class="form-check-label" for="dayNightToggle">Night Mode</label>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="glareToggle">
+            <label class="form-check-label" for="glareToggle">Glare</label>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Light Direction</label>
+            <select id="lightDirection" class="form-select">
+              <option value="indirect">Indirect Light</option>
+              <option value="direct">Direct Light</option>
+            </select>
+            <small id="directionReason" class="text-muted"></small>
+          </div>
+          
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Behavior Dashboard -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card bg-secondary text-white">
+        <div class="card-body text-center">
+          <h5>Animal Behavior & Health</h5>
+          <p id="activityLevel" class="mt-2">Activity Level: Normal</p>
+          <p id="healthImpact">Health Impact: Positive</p>
+          <p id="stressLevel">Stress Level: Low</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const animalSelect = document.getElementById('animalSelect');
+  const tempSlider = document.getElementById('tempSlider');
+  const luxSlider = document.getElementById('luxSlider');
+  const criSlider = document.getElementById('criSlider');
+  const dayNightToggle = document.getElementById('dayNightToggle');
+  const glareToggle = document.getElementById('glareToggle');
+//   const lightDirection = document.getElementById('lightDirection');
+  const enclosure = document.getElementById('enclosure');
+  const overlay = document.getElementById('overlay');
+
+  const activityLevel = document.getElementById('activityLevel');
+  const healthImpact = document.getElementById('healthImpact');
+  const stressLevel = document.getElementById('stressLevel');
+
+  // Recommended ranges for each animal
+  const animalSettings = {
+    lion: { minTemp: 3000, maxTemp: 4000, minLux: 100, maxLux: 300, minCRI: 80, maxCRI: 90 },
+    owl: { minTemp: 3200, maxTemp: 4200, minLux: 120, maxLux: 280, minCRI: 75, maxCRI: 90 }
+  };
+
+  // Images
+  const images = {
+  lion: {
+        morning: {
+            happy: "images/lion/Lion_waiting_in_Namibia.jpg",
+            sad: "images/lion/angry.png"
+            },
+            night: {
+            happy: "images/lion/sleep.jpeg",
+            sad: "images/lion/angry.png"
+            }
+        },
+        owl: {
+            morning: {
+            happy: "images/owl/normal_owl.jpg",
+            sad: "images/owl/angry_owl.jpg"
+            },
+            night: {
+            happy: "images/owl/sleeping_owl.jpg",
+            sad: "images/owl/angry_owl.jpg"
+            }
+        }
+    };
+
+
+  // Value display elements
+const tempValue = document.getElementById('tempValue');
+const luxValue = document.getElementById('luxValue');
+const criValue = document.getElementById('criValue');
+
+// Reason text elements
+const tempReason = document.getElementById('tempReason');
+const luxReason = document.getElementById('luxReason');
+const criReason = document.getElementById('criReason');
+const lightDirection = document.getElementById('lightDirection');
+const directionReason = document.getElementById('directionReason');
+
+function updateSimulation() {
+  const animal = animalSelect.value;
+  const temp = parseInt(tempSlider.value);
+  const lux = parseInt(luxSlider.value);
+  const cri = parseInt(criSlider.value);
+  const isNight = dayNightToggle.checked;
+  const glare = glareToggle.checked;
+  const direction = lightDirection.value;
+
+  // Show live values
+  tempValue.textContent = temp;
+  luxValue.textContent = lux;
+  criValue.textContent = cri;
+
+  const rec = animalSettings[animal];
+
+  // === Comfort check per value + highlight ===
+  // Temp
+  if (temp < rec.minTemp) {
+    tempSlider.classList.add("border-danger");
+    tempValue.style.color = "red";
+    tempReason.textContent = "Too warm (reddish light)";
+  } else if (temp > rec.maxTemp) {
+    tempSlider.classList.add("border-danger");
+    tempValue.style.color = "red";
+    tempReason.textContent = "Too cool (bluish light)";
+  } else {
+    tempSlider.classList.remove("border-danger");
+    tempValue.style.color = "";
+    tempReason.textContent = "";
+  }
+
+  // Lux
+  if (lux < rec.minLux) {
+    luxSlider.classList.add("border-danger");
+    luxValue.style.color = "red";
+    luxReason.textContent = "Too dim";
+  } else if (lux > rec.maxLux) {
+    luxSlider.classList.add("border-danger");
+    luxValue.style.color = "red";
+    luxReason.textContent = "Too bright";
+  } else {
+    luxSlider.classList.remove("border-danger");
+    luxValue.style.color = "";
+    luxReason.textContent = "";
+  }
+
+  // CRI
+  if (cri < rec.minCRI) {
+    criSlider.classList.add("border-danger");
+    criValue.style.color = "red";
+    criReason.textContent = "Low color accuracy";
+  } else if (cri > rec.maxCRI) {
+    criSlider.classList.add("border-danger");
+    criValue.style.color = "red";
+    criReason.textContent = "Unnaturally high color tone";
+  } else {
+    criSlider.classList.remove("border-danger");
+    criValue.style.color = "";
+    criReason.textContent = "";
+  }
+
+  // === Lighting effect (CCT, CRI, Lux) ===
+  let warmthRatio = (temp - 2500) / (5000 - 2500);
+  let hueShift = warmthRatio < 0.5
+    ? -40 * (0.5 - warmthRatio) * 2
+    : 40 * (warmthRatio - 0.5) * 2;
+
+  let brightness = lux / 300;
+  if (glare) brightness += 0.3;
+
+  let saturation = ((cri - 60) / 40) * 2;
+
+  enclosure.style.filter = `
+    brightness(${brightness})
+    contrast(1)
+    hue-rotate(${hueShift}deg)
+    saturate(${saturation})
+  `;
+
+  // === Direct vs Indirect lighting explanation ===
+  if (direction === "direct") {
+    directionReason.textContent = "Direct light: higher glare risk, may cause stress if excessive.";
+  } else {
+    directionReason.textContent = "Indirect light: softer illumination, reduces stress and glare.";
+  }
+
+  // Apply visual CSS class for light direction
+  enclosure.classList.remove("direct-light", "indirect-light");
+  enclosure.classList.add(direction + "-light");
+
+  // === Comfort check (now includes direction) ===
+  let comfortable = (temp >= rec.minTemp && temp <= rec.maxTemp &&
+                     lux >= rec.minLux && lux <= rec.maxLux &&
+                     cri >= rec.minCRI && cri <= rec.maxCRI &&
+                     !glare &&
+                     direction === "indirect");
+
+  // === Image selection (morning/night → happy/sad) ===
+  let timeOfDay = isNight ? 'night' : 'morning';
+  let mood = comfortable ? 'happy' : 'sad';
+  enclosure.style.backgroundImage = `url(${images[animal][timeOfDay][mood]})`;
+
+  // === Behavior text ===
+  if (isNight && comfortable) {
+    activityLevel.textContent = "Activity Level: Sleeping";
+    healthImpact.textContent = "Health Impact: Resting Phase";
+    stressLevel.textContent = "Stress Level: Low";
+  } else if (isNight && !comfortable) {
+    activityLevel.textContent = "Activity Level: Disturbed at Night";
+    healthImpact.textContent = "Health Impact: Negative (Interrupted Rest)";
+    stressLevel.textContent = "Stress Level: High";
+  } else if (!isNight && !comfortable) {
+    activityLevel.textContent = "Activity Level: Agitated";
+    healthImpact.textContent = "Health Impact: Negative";
+    stressLevel.textContent = "Stress Level: High";
+  } else {
+    activityLevel.textContent = "Activity Level: Active & Healthy";
+    healthImpact.textContent = "Health Impact: Positive";
+    stressLevel.textContent = "Stress Level: Low";
+  }
+
+  if (direction === "direct") {
+  if (isNight) {
+    directionReason.textContent = "Direct moonlight: can disrupt nocturnal rest if too bright.";
+  } else {
+    directionReason.textContent = "Direct sunlight: strong and focused, may cause glare and stress if excessive.";
+  }
+} else {
+  if (isNight) {
+    directionReason.textContent = "Indirect moonlight: soft and diffused, minimizes disturbance during rest.";
+  } else {
+    directionReason.textContent = "Indirect daylight: gentle and uniform, supports comfort and natural activity.";
+  }
+}
+}
+
+
+  [animalSelect, tempSlider, luxSlider, criSlider, dayNightToggle, glareToggle, lightDirection].forEach(el => {
+    el.addEventListener('input', updateSimulation);
+  });
+
+  updateSimulation();
+</script>
+</body>
+</html>
