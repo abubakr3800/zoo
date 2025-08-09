@@ -1,0 +1,56 @@
+{
+    "lion": {
+      "lighting_conditions": [
+        {
+          "activity": "Walking / general daytime activity",
+          "illuminance_lux": { "min": 150, "max": 500 },
+          "CCT_K": { "min": 3500, "max": 5000 },
+          "CRI_Ra": { "min": 80, "max": 100 },
+          "glare": "Use diffused/indirect lighting, avoid direct beams into eyes",
+          "flicker": { "min": 1, "max": 1000 },
+          "image": "images/lion/gif/playing.gif",
+          "notes": "Dimmable to 30–100% for behavior control",
+          "avoid": {
+            "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes" },
+            "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 3000, "description": "Avoid cool, blue-rich light at night" },
+            "point_sources": { "min": 0, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)" },
+            "shadows": { "min": 0, "max": 1, "description": "Minimize moving shadows (1 = present)" }
+          }
+        },
+        {
+          "activity": "Eating / feeding / veterinary checks",
+          "illuminance_lux": { "min": 300, "max": 800 },
+          "CCT_K": { "min": 3500, "max": 4500 },
+          "CRI_Ra": { "min": 80, "max": 100 },
+          "glare": "Localized task lighting (hooded, downward) to minimize glare",
+          "flicker": { "min": 1, "max": 1000 },
+          "image": "images/lion/gif/eating.gif",
+          "avoid": {
+            "lighting_changes": { "min": 801, "max": 1000, "description": "Sudden high-contrast changes" },
+            "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 3000, "description": "Avoid cool, blue-rich light at night" },
+            "point_sources": { "min": 0, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)" },
+            "shadows": { "min": 0, "max": 1, "description": "Minimize moving shadows (1 = present)" }
+          }
+        },
+        {
+          "activity": "Sleeping / night",
+          "illuminance_lux": { "min": 0, "max": 1, "melanopic_EDI_lx": 0.1 },
+          "CCT_K": { "min": 1800, "max": 2700 },
+          "CRI_Ra": { "min": 0, "max": 100 },
+          "glare": "Provide dark retreat areas (0 lx if possible)",
+          "flicker": { "min": 1, "max": 1000 },
+          "image": "images/lion/gif/sleeping.jpg",
+          "avoid": {
+            "lighting_changes": { "min": 0, "max": 50, "description": "Sudden high-contrast changes at night" },
+            "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 3000, "description": "Avoid cool, blue-rich light at night" },
+            "point_sources": { "min": 0, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)" },
+            "shadows": { "min": 0, "max": 1, "description": "Minimize moving shadows (1 = present)" }
+          }
+        }
+      ]
+    }
+  }
+  

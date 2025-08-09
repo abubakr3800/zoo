@@ -122,122 +122,105 @@ function applyVisualFilters(cct, lux, cri, glareFlag){
   enclosure.classList.toggle('glare', !!glareFlag);
 }
 
+function ruleViolates(rule, value) {
+  if (typeof value !== 'number') return false;
+
+  switch (rule.operator) {
+    case 'gt': // greater than min
+      return value > (rule.min !== undefined ? rule.min : rule.max);
+    case 'lt': // less than max
+      return value < (rule.max !== undefined ? rule.max : rule.min);
+    case 'eq': // equals min (or max)
+      return value === rule.min;
+    case 'in_range': // between min and max
+      return value >= rule.min && value <= rule.max;
+    default:
+      const hasMin = typeof rule.min === 'number';
+      const hasMax = typeof rule.max === 'number';
+      if (hasMin && hasMax) return value < rule.min || value > rule.max;
+      if (hasMin && !hasMax) return value < rule.min;
+      if (!hasMin && hasMax) return value > rule.max;
+      return false;
+  }
+}
+
 function updateSimulation() {
   const cct = Number(tempSlider.value);
   const lux = Number(luxSlider.value);
   const cri = Number(criSlider.value);
   const glareFlag = Number(glareSelect.value);
 
-  // Display values
   tempSpan.textContent = `${cct}K`;
   luxSpan.textContent = `${lux} lx`;
   criSpan.textContent = `${cri}`;
 
-  // Get selected animal & mode
   const cond = lightingData[selectedAnimal]?.lighting_conditions[selectedModeIndex];
   if (!cond) return;
 
-  // Reset styles
   tempSpan.className = "stat-pill";
   luxSpan.className = "stat-pill";
   criSpan.className = "stat-pill";
   glareSelect.classList.remove("border-danger");
 
-  // Helper to check violations (below min, above max, or in avoid range)
-  function ruleViolates(rule, value) {
-  if (typeof value !== 'number') return false;
+  let avoidTriggered = false;
 
-  switch (rule.operator) {
-    case 'gt': // greater than
-      return value > rule.max;
-    case 'lt': // less than
-      return value < rule.min;
-    case 'eq': // equals
-      return value === rule.min; // or === rule.max if min==max
-    case 'in_range': // value between min and max inclusive
-      return value >= rule.min && value <= rule.max;
-    default: // fallback to min/max check if no operator
-      const hasMin = typeof rule.min === 'number';
-      const hasMax = typeof rule.max === 'number';
-      if (hasMin && hasMax) {
-        return value < rule.min || value > rule.max;
-      }
-      if (hasMin && !hasMax) return value < rule.min;
-      if (!hasMin && hasMax) return value > rule.max;
-      return false;
-  }
-}
-// =======================
-// 1. Safe range checks
-// =======================
-let avoidTriggered = false;
-
-// Check CCT range
-if (cct < cond.CCT_K.min || cct > cond.CCT_K.max) {
-  tempSpan.classList.add("value-bad");
-  avoidTriggered = true;
-} else {
-  tempSpan.classList.add("value-ok");
-}
-
-// Check Lux range
-if (lux < cond.illuminance_lux.min || lux > cond.illuminance_lux.max) {
-  luxSpan.classList.add("value-bad");
-  avoidTriggered = true;
-} else {
-  luxSpan.classList.add("value-ok");
-}
-
-// Check CRI range
-if (cri < cond.CRI_Ra.min || cri > cond.CRI_Ra.max) {
-  criSpan.classList.add("value-bad");
-  avoidTriggered = true;
-} else {
-  criSpan.classList.add("value-ok");
-}
-
-// =======================
-// 2. Avoid rules check
-// =======================
-avoidRulesDiv.innerHTML = "";
-
-for (const [key, rule] of Object.entries(cond.avoid)) {
-  let valueToCheck = null;
-  const k = key.toLowerCase();
-
-  // Map avoid rules to correct parameter
-  if (k.includes("blue")) valueToCheck = cct;
-  else if (k.includes("lighting_changes") || k.includes("lux")) valueToCheck = lux;
-  else if (k.includes("cri") || k.includes("flicker")) valueToCheck = cri;
-  else if (k.includes("point") || k.includes("glare") || k.includes("shadows")) valueToCheck = glareFlag;
-
-  if (valueToCheck !== null && valueToCheck >= rule.min && valueToCheck <= rule.max) {
+  // Safe range checks
+  if (cct < cond.CCT_K.min || cct > cond.CCT_K.max) {
+    tempSpan.classList.add("value-bad");
     avoidTriggered = true;
-    const p = document.createElement("p");
-    p.className = "avoid-rule text-danger";
-    p.innerHTML = `<strong>${key}</strong>: ${rule.description} 
-      <span class="meta">(You: ${valueToCheck}, Avoid: ${rule.min}–${rule.max})</span>`;
-    avoidRulesDiv.appendChild(p);
+  } else {
+    tempSpan.classList.add("value-ok");
   }
+
+  if (lux < cond.illuminance_lux.min || lux > cond.illuminance_lux.max) {
+    luxSpan.classList.add("value-bad");
+    avoidTriggered = true;
+  } else {
+    luxSpan.classList.add("value-ok");
+  }
+
+  if (cri < cond.CRI_Ra.min || cri > cond.CRI_Ra.max) {
+    criSpan.classList.add("value-bad");
+    avoidTriggered = true;
+  } else {
+    criSpan.classList.add("value-ok");
+  }
+
+  avoidRulesDiv.innerHTML = "";
+
+  // Check avoid rules
+  for (const [key, rule] of Object.entries(cond.avoid)) {
+    let valueToCheck = null;
+    const k = key.toLowerCase();
+
+    if (k.includes("blue")) valueToCheck = cct;
+    else if (k.includes("lighting_changes") || k.includes("lux")) valueToCheck = lux;
+    else if (k.includes("cri") || k.includes("flicker")) valueToCheck = cri;
+    else if (k.includes("point") || k.includes("glare") || k.includes("shadows")) valueToCheck = glareFlag;
+
+    if (valueToCheck !== null && ruleViolates(rule, valueToCheck)) {
+      avoidTriggered = true;
+      const p = document.createElement("p");
+      p.className = "avoid-rule text-danger";
+      p.innerHTML = `<strong>${key}</strong>: ${rule.description} 
+        <span class="meta">(You: ${valueToCheck}, Avoid: ${rule.min ?? '–'}–${rule.max ?? '–'})</span>`;
+      avoidRulesDiv.appendChild(p);
+    }
+  }
+
+  if (!avoidTriggered) {
+    avoidRulesDiv.innerHTML = `<p class="meta">No avoid patterns triggered.</p>`;
+  }
+
+  // Set enclosure image
+  let bgImage = avoidTriggered ? "images/lion/gif/anoyed.gif" : cond.image;
+  enclosure.style.backgroundImage = `url("${bgImage}")`;
+
+  // Apply visual filters
+  applyVisualFilters(cct, lux, cri, glareFlag);
 }
 
-if (!avoidTriggered) {
-  avoidRulesDiv.innerHTML = `<p class="meta">No avoid patterns triggered.</p>`;
-}
-
-// =======================
-// 5. Set enclosure image
-// =======================
-let bgImage = cond.image;
-if (avoidTriggered) {
-  bgImage = "images/lion/gif/anoyed.gif";
-}
-enclosure.style.backgroundImage = `url("${bgImage}")`;
-
-}
-
-
-function populateModes(){
+function populateModes() {
   const list = lightingData[selectedAnimal]?.lighting_conditions ?? [];
   modeSelect.innerHTML = '';
   list.forEach((c, i) => {
@@ -250,7 +233,7 @@ function populateModes(){
   modeSelect.value = 0;
 }
 
-async function loadLightingJSON(){
+async function loadLightingJSON() {
   const res = await fetch('database/db.json');
   lightingData = await res.json();
   animalSelect.innerHTML = '';
@@ -265,9 +248,18 @@ async function loadLightingJSON(){
   updateSimulation();
 }
 
-animalSelect.addEventListener('change', e => { selectedAnimal = e.target.value; populateModes(); updateSimulation(); });
-modeSelect.addEventListener('change', e => { selectedModeIndex = Number(e.target.value); updateSimulation(); });
-[tempSlider, luxSlider, criSlider, glareSelect].forEach(el => { el.addEventListener('input', updateSimulation); });
+animalSelect.addEventListener('change', e => { 
+  selectedAnimal = e.target.value; 
+  populateModes(); 
+  updateSimulation(); 
+});
+modeSelect.addEventListener('change', e => { 
+  selectedModeIndex = Number(e.target.value); 
+  updateSimulation(); 
+});
+[tempSlider, luxSlider, criSlider, glareSelect].forEach(el => { 
+  el.addEventListener('input', updateSimulation); 
+});
 
 loadLightingJSON();
 </script>
