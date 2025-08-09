@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zoo Lighting Impact Simulator - Night Study</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zoo Lighting Impact Simulator — Night Study</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    body { background-color: #121212; }
+    :root{
+      --bg:#0b0b0f;
+      --card:#1f2933;
+      --muted:#98a0a6;
+      --danger:#ff4d4f;
+      --ok:#4ad994;
+      --accent:#ffd580;
+    }
+    body { background: var(--bg); color: #fff; font-family: Inter, system-ui, sans-serif; }
+    .container { max-width: 1100px; }
     .enclosure {
       position: relative;
       width: 100%;
@@ -14,176 +23,373 @@
       background-size: cover;
       background-position: center;
       border-radius: 10px;
-      transition: filter 0.3s ease, background-image 0.3s ease;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+      transition: filter 250ms linear, background-image 300ms ease;
+      background-color: #111;
     }
-    .text-safe { color: #0f0; }
-    .text-warning { color: #ff0; }
-    .text-danger { color: #f00; }
+    .enclosure .overlay {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+
+    /* Glare radial */
+    .enclosure.glare::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 55% 35%, rgba(255,255,210,0.55) 0%, rgba(255,255,210,0.18) 20%, transparent 50%);
+      mix-blend-mode: screen;
+      transition: opacity 200ms ease;
+    }
+
+    /* Light direction hint (not used much for night, kept for completeness) */
+    .small-muted { color: var(--muted); font-size: 0.9rem; }
+
+    .value-ok { color: var(--ok); font-weight: 600; }
+    .value-bad { color: var(--danger); font-weight: 700; }
+
+    .card { background: var(--card); border: 0; }
+    .form-select.border-danger { border: 1.5px solid var(--danger) !important; }
+    .avoid-rule { border-left: 3px solid rgba(255,255,255,0.06); padding-left: 10px; margin-bottom: 8px; }
+    .avoid-rule .rule-title { font-weight: 700; color: #fff; }
+    .avoid-rule .rule-desc { color: var(--muted); font-size: 0.95rem; }
+    .meta { color: var(--muted); font-size: 0.92rem; }
+    .stat-pill { display:inline-block; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-left:8px; font-weight:600; }
+    /* small responsive */
+    @media (max-width: 767px){
+      .enclosure { height: 260px; margin-bottom: 12px; }
+    }
   </style>
 </head>
-<body class="text-white">
-<div class="container py-4">
-  <h1 class="mb-4 text-center">Zoo Lighting Impact Simulator (Night Study)</h1>
+<body>
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Zoo Lighting Impact Simulator — Night Study</h1>
 
-  <div class="row g-4">
-    <!-- Simulation Area -->
-    <div class="col-md-4">
-      <div id="enclosure" class="enclosure bg-dark"></div>
-    </div>
+    <div class="row g-4">
+      <!-- Simulation area -->
+      <div class="col-lg-4">
+        <div id="enclosure" class="enclosure">
+          <div class="overlay"></div>
+        </div>
+        <p class="small-muted mt-2">Image preview reflects applied CCT · Lux · CRI · Glare effects</p>
+      </div>
 
-    <!-- Controls -->
-    <div class="col-md-8">
-      <div class="card bg-secondary text-white">
-        <div class="card-body">
-          <h5>Lighting Controls</h5>
+      <!-- Controls -->
+      <div class="col-lg-8">
+        <div class="card p-3">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label small-muted">Animal</label>
+              <select id="animalSelect" class="form-select">
+                <option value="lion">Lion</option>
+              </select>
+            </div>
 
-          <label class="form-label mt-2">Animal</label>
-          <select id="animalSelect" class="form-select">
-            <option value="lion">Lion</option>
-          </select>
+            <div class="col-12 col-md-6">
+              <label class="form-label small-muted">Mode (Night activity)</label>
+              <select id="modeSelect" class="form-select"></select>
+            </div>
 
-          <label class="form-label mt-2">Mode (Night Activity)</label>
-          <select id="modeSelect" class="form-select">
-            <!-- will populate dynamically -->
-          </select>
+            <div class="col-12">
+              <label class="form-label">Color Temperature (K)
+                <span id="tempSpan" class="stat-pill">—</span>
+              </label>
+              <input id="tempSlider" class="form-range" type="range" min="1500" max="10000" step="100" value="2000">
+              <div class="d-flex justify-content-between meta">
+                <div>Warmer ← → Cooler</div>
+                <div>CCT will change hue & tint of the image</div>
+              </div>
+            </div>
 
-          <div class="mt-3">
-            <label class="form-label">Color Temperature (K): 
-              <span id="tempValue">0</span>
-            </label>
-            <input type="range" min="1500" max="10000" value="3500" step="100" id="tempSlider" class="form-range">
-            <small id="tempReason"></small>
-          </div>
+            <div class="col-12">
+              <label class="form-label">Illuminance (lux)
+                <span id="luxSpan" class="stat-pill">—</span>
+              </label>
+              <input id="luxSlider" class="form-range" type="range" min="0" max="1000" step="10" value="5">
+              <div class="d-flex justify-content-between meta">
+                <div>0 (dark) — 1000 (very bright)</div>
+                <div>Brightness / exposure simulated</div>
+              </div>
+            </div>
 
-          <div class="mt-3">
-            <label class="form-label">Lux Level: 
-              <span id="luxValue">0</span>
-            </label>
-            <input type="range" min="0" max="1000" value="200" step="10" id="luxSlider" class="form-range">
-            <small id="luxReason"></small>
-          </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">CRI
+                <span id="criSpan" class="stat-pill">—</span>
+              </label>
+              <input id="criSlider" class="form-range" type="range" min="0" max="100" step="1" value="0">
+              <div class="meta">Higher CRI → richer colors</div>
+            </div>
 
-          <div class="mt-3">
-            <label class="form-label">CRI: 
-              <span id="criValue">0</span>
-            </label>
-            <input type="range" min="60" max="100" value="90" step="1" id="criSlider" class="form-range">
-            <small id="criReason"></small>
-          </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Glare</label>
+              <select id="glareSelect" class="form-select">
+                <option value="0">None</option>
+                <option value="1">Present</option>
+              </select>
+              <div class="meta">If present, a localized bright spot is added</div>
+            </div>
 
-          <div class="mt-3">
-            <label class="form-label">Glare</label>
-            <select id="glareSelect" class="form-select">
-              <option value="none">None</option>
-              <option value="present">Present</option>
-            </select>
-            <small id="glareReason"></small>
+            <div class="col-12">
+              <div class="d-flex gap-3">
+                <div id="activityLevel" class="meta">Activity: —</div>
+                <div id="healthImpact" class="meta">CCT: —</div>
+                <div id="stressLevel" class="meta">Stress: —</div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Avoid Rules -->
-  <div class="row mt-4">
-    <div class="col">
-      <div class="card bg-dark text-white">
-        <div class="card-body">
-          <h5 class="card-title">Avoid Patterns Triggered</h5>
-          <div id="avoidRules"></div>
+    <!-- Avoid section -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card p-3">
+          <h5 class="mb-2">Avoid Patterns Triggered</h5>
+          <div id="avoidRules" class="mb-2">
+            <p class="meta">No rules triggered (safe).</p>
+          </div>
+          <div id="violationsSummary" class="meta"></div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
 <script>
-let lightingData = {};
-let selectedAnimal = "lion";
-let selectedMode = null;
+/* =========================
+   Config & DOM refs
+   ========================= */
+const enclosure = document.getElementById('enclosure');
+const animalSelect = document.getElementById('animalSelect');
+const modeSelect = document.getElementById('modeSelect');
 
 const tempSlider = document.getElementById('tempSlider');
 const luxSlider = document.getElementById('luxSlider');
 const criSlider = document.getElementById('criSlider');
 const glareSelect = document.getElementById('glareSelect');
 
-const tempValue = document.getElementById('tempValue');
-const luxValue = document.getElementById('luxValue');
-const criValue = document.getElementById('criValue');
+const tempSpan = document.getElementById('tempSpan');
+const luxSpan = document.getElementById('luxSpan');
+const criSpan = document.getElementById('criSpan');
 
-async function loadLightingData() {
-  const res = await fetch("database/db.json");
-  lightingData = await res.json();
+const avoidRulesDiv = document.getElementById('avoidRules');
+const violationsSummary = document.getElementById('violationsSummary');
 
-  const modeSelect = document.getElementById('modeSelect');
-  modeSelect.innerHTML = "";
-  lightingData[selectedAnimal].lighting_conditions.forEach((cond, idx) => {
-    const opt = document.createElement("option");
-    opt.value = idx;
-    opt.textContent = cond.activity;
-    modeSelect.appendChild(opt);
-  });
-  selectedMode = 0;
-  updateSimulation();
+const activityLevel = document.getElementById('activityLevel');
+const healthImpact = document.getElementById('healthImpact');
+const stressLevel = document.getElementById('stressLevel');
+
+let lightingData = {};
+let selectedAnimal = 'lion';
+let selectedModeIndex = 0;
+
+/* =========================
+   Utility helpers
+   ========================= */
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function humanRange(obj){
+  if(!obj) return '';
+  const min = typeof obj.min === 'number' ? obj.min : obj.min ?? '';
+  const max = typeof obj.max === 'number' ? obj.max : obj.max ?? '';
+  return (min !== '' || max !== '') ? `${min} — ${max}` : '';
 }
 
-function updateSimulation() {
-  const cond = lightingData[selectedAnimal].lighting_conditions[selectedMode];
-  const temp = parseInt(tempSlider.value);
-  const lux = parseInt(luxSlider.value);
-  const cri = parseInt(criSlider.value);
-  const glare = glareSelect.value;
+/* =========================
+   Load JSON (external)
+   Put your lionLighting.json next to this file.
+   ========================= */
+async function loadLightingJSON(){
+  try {
+    const res = await fetch('database/db.json', {cache: "no-store"});
+    if(!res.ok) throw new Error('Failed to fetch JSON: ' + res.status);
+    lightingData = await res.json();
 
-  tempValue.textContent = temp;
-  luxValue.textContent = lux;
-  criValue.textContent = cri;
+    // populate animals dropdown (in case you add more animals later)
+    animalSelect.innerHTML = '';
+    Object.keys(lightingData).forEach(an => {
+      const o = document.createElement('option');
+      o.value = an;
+      o.textContent = an.charAt(0).toUpperCase() + an.slice(1);
+      animalSelect.appendChild(o);
+    });
 
-  const avoidDiv = document.getElementById('avoidRules');
-  avoidDiv.innerHTML = "";
-
-  // Reset colors
-  tempValue.className = "";
-  luxValue.className = "";
-  criValue.className = "";
-
-  // Check avoid rules
-  for (const [key, obj] of Object.entries(cond.avoid)) {
-    let violated = false;
-
-    if (key.toLowerCase().includes("cct") || key.toLowerCase().includes("blue")) {
-      if (temp < obj.min || temp > obj.max) violated = true;
-    }
-    if (key.toLowerCase().includes("lux") || key.toLowerCase().includes("lighting_changes")) {
-      if (lux < obj.min || lux > obj.max) violated = true;
-    }
-    if (key.toLowerCase().includes("flicker") || key.toLowerCase().includes("cri")) {
-      if (cri < obj.min || cri > obj.max) violated = true;
-    }
-    if (key.toLowerCase().includes("glare") || key.toLowerCase().includes("point_sources")) {
-      if (glare === "present") violated = true;
-    }
-
-    if (violated) {
-      const p = document.createElement("p");
-      p.textContent = `${key}: ${obj.description}`;
-      avoidDiv.appendChild(p);
-
-      // Highlight affected value in red
-      if (key.toLowerCase().includes("cct") || key.toLowerCase().includes("blue")) tempValue.className = "text-danger";
-      if (key.toLowerCase().includes("lux") || key.toLowerCase().includes("lighting_changes")) luxValue.className = "text-danger";
-      if (key.toLowerCase().includes("flicker") || key.toLowerCase().includes("cri")) criValue.className = "text-danger";
-      if (key.toLowerCase().includes("glare") || key.toLowerCase().includes("point_sources")) glareSelect.className = "form-select border border-danger";
-    }
+    // populate modes for selected animal
+    populateModes();
+    updateSimulation();
+  } catch (err){
+    console.error(err);
+    avoidRulesDiv.innerHTML = '<p class="meta">Could not load lionLighting.json — check file location and console.</p>';
   }
 }
 
-document.getElementById('animalSelect').addEventListener('change', e => {
-  selectedAnimal = e.target.value;
-  loadLightingData();
-});
+function populateModes(){
+  const list = lightingData[selectedAnimal]?.lighting_conditions ?? [];
+  modeSelect.innerHTML = '';
+  list.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.activity || `mode ${i+1}`;
+    modeSelect.appendChild(opt);
+  });
+  selectedModeIndex = 0;
+  modeSelect.value = 0;
+}
 
-document.getElementById('modeSelect').addEventListener('change', e => {
-  selectedMode = parseInt(e.target.value);
+/* =========================
+   Visual effect mapping
+   ========================= */
+function applyVisualFilters(cct, lux, cri, glareFlag){
+  // CCT -> hueRotate
+  // map 1500..10000 -> warmthRatio 0..1 relative to 2000..5000 nominal range
+  let warmthRatio = (cct - 2000) / (5000 - 2000);
+  warmthRatio = clamp(warmthRatio, -1, 1);
+  let hueShift = 0;
+  if (warmthRatio < 0.5) hueShift = -40 * (0.5 - warmthRatio) * 2;
+  else hueShift = 40 * (warmthRatio - 0.5) * 2;
+
+  // Lux -> brightness (normalized)
+  let brightness = clamp(lux / 300, 0.05, 3);
+
+  // CRI -> saturation mapping (0..100 => 0.3..1.8)
+  let saturation = clamp(0.3 + (cri / 100) * 1.5, 0.2, 3);
+
+  // Construct filter
+  enclosure.style.filter = `brightness(${brightness}) contrast(1) hue-rotate(${hueShift}deg) saturate(${saturation})`;
+
+  // Glare toggle
+  enclosure.classList.toggle('glare', !!glareFlag);
+}
+
+/* =========================
+   Validator (compares numeric min/max)
+   Returns array of violation objects
+   ========================= */
+function validateAgainstAvoid(cond, cct, lux, cri, glareFlag){
+  const violations = [];
+  if(!cond || !cond.avoid) return violations;
+
+  for(const [key, rule] of Object.entries(cond.avoid)){
+    // rule: {min:number, max:number, description:string}
+    const min = (typeof rule.min === 'number') ? rule.min : null;
+    const max = (typeof rule.max === 'number') ? rule.max : null;
+    let valueToCheck = null;
+    let label = key;
+
+    const lk = key.toLowerCase();
+
+    if (lk.includes('cct') || lk.includes('blue')) valueToCheck = cct;
+    else if (lk.includes('lux') || lk.includes('lighting_changes')) valueToCheck = lux;
+    else if (lk.includes('cri') || lk.includes('flicker')) valueToCheck = cri;
+    else if (lk.includes('point') || lk.includes('glare') || lk.includes('shadows')) valueToCheck = glareFlag ? 1 : 0;
+    else valueToCheck = null;
+
+    let violated = false;
+    if (valueToCheck !== null) {
+      if (min !== null && valueToCheck < min) violated = true;
+      if (max !== null && valueToCheck > max) violated = true;
+    }
+
+    if (violated){
+      violations.push({
+        key, description: rule.description || '', min, max,
+        actual: valueToCheck
+      });
+    }
+  }
+  return violations;
+}
+
+/* =========================
+   Main UI update
+   ========================= */
+function updateSimulation(){
+  const cct = Number(tempSlider.value);
+  const lux = Number(luxSlider.value);
+  const cri = Number(criSlider.value);
+  const glareFlag = Number(glareSelect.value);
+
+  // display numeric labels
+  tempSpan.textContent = `${cct}K`;
+  luxSpan.textContent = `${lux} lx`;
+  criSpan.textContent = `${cri}`;
+
+  // find current condition
+  const conditions = lightingData[selectedAnimal]?.lighting_conditions ?? [];
+  const cond = conditions[selectedModeIndex] ?? null;
+
+  // set background image (prefer cond.image)
+  let bgImage = '';
+  if (cond && cond.image) bgImage = cond.image;
+  else {
+    // fallback map by mode description keywords
+    const act = (cond?.activity || '').toLowerCase();
+    if (act.includes('sleep')) bgImage = 'images/lion/gif/sleeping.jpg';
+    else if (act.includes('eat')) bgImage = 'images/lion/gif/eating.gif';
+    else if (act.includes('walk') || act.includes('explore')) bgImage = 'images/lion/gif/playing.gif';
+    else bgImage = 'images/lion/gif/default.gif';
+  }
+  enclosure.style.backgroundImage = `url("${bgImage}")`;
+
+  // apply visual effects
+  applyVisualFilters(cct, lux, cri, glareFlag);
+
+  // check avoid rules
+  const violations = validateAgainstAvoid(cond, cct, lux, cri, glareFlag);
+
+  // reset value styles
+  tempSpan.className = 'stat-pill';
+  luxSpan.className = 'stat-pill';
+  criSpan.className = 'stat-pill';
+  glareSelect.classList.remove('border-danger');
+
+  avoidRulesDiv.innerHTML = '';
+  violationsSummary.textContent = '';
+
+  if (violations.length === 0) {
+    avoidRulesDiv.innerHTML = '<p class="meta">No rules triggered — current settings are within allowed ranges for this mode.</p>';
+  } else {
+    // summarize and highlight offending controls
+    violations.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'avoid-rule';
+      const title = document.createElement('div');
+      title.className = 'rule-title';
+      title.textContent = `${v.key} — actual: ${v.actual} (allowed: ${v.min ?? '-'} to ${v.max ?? '-'})`;
+      const desc = document.createElement('div');
+      desc.className = 'rule-desc';
+      desc.textContent = v.description || '';
+      div.appendChild(title);
+      div.appendChild(desc);
+      avoidRulesDiv.appendChild(div);
+
+      // decide which control to highlight
+      const k = v.key.toLowerCase();
+      if (k.includes('cct') || k.includes('blue')) tempSpan.className = 'stat-pill value-bad';
+      if (k.includes('lux') || k.includes('lighting_changes')) luxSpan.className = 'stat-pill value-bad';
+      if (k.includes('cri') || k.includes('flicker')) criSpan.className = 'stat-pill value-bad';
+      if (k.includes('glare') || k.includes('point') || k.includes('shadows')) glareSelect.classList.add('border-danger');
+    });
+
+    violationsSummary.textContent = `${violations.length} violation(s) detected — adjust sliders to clear them.`;
+  }
+
+  // update short status texts
+  activityLevel.textContent = `Activity: ${cond?.activity ?? '—'}`;
+  healthImpact.textContent = `CCT target: ${cond?.CCT_K?.min ?? '—'} — ${cond?.CCT_K?.max ?? '—'} K`;
+  stressLevel.textContent = violations.length ? 'Stress: Elevated' : 'Stress: Low';
+}
+
+/* =========================
+   Event wiring
+   ========================= */
+animalSelect.addEventListener('change', e => {
+  selectedAnimal = e.target.value;
+  populateModes();
+  updateSimulation();
+});
+modeSelect.addEventListener('change', e => {
+  selectedModeIndex = Number(e.target.value);
   updateSimulation();
 });
 
@@ -191,7 +397,10 @@ document.getElementById('modeSelect').addEventListener('change', e => {
   el.addEventListener('input', updateSimulation);
 });
 
-loadLightingData();
+/* =========================
+   Start
+   ========================= */
+loadLightingJSON();
 </script>
 </body>
 </html>
