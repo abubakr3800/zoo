@@ -36,18 +36,18 @@
         },
         {
           "activity": "Sleeping / night",
-          "illuminance_lux": { "min": 0, "max": 1, "melanopic_EDI_lx": 0.1 },
+          "illuminance_lux": { "min": 0, "max": 50, "melanopic_EDI_lx": 0.1 },
           "CCT_K": { "min": 1800, "max": 2700 },
           "CRI_Ra": { "min": 0, "max": 100 },
           "glare": "Provide dark retreat areas (0 lx if possible)",
           "flicker": { "min": 1, "max": 1000 },
           "image": "images/lion/gif/sleeping.jpg",
           "avoid": {
-            "lighting_changes": { "min": 101, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
-            "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
+            "lighting_changes": { "min": 51, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
+            "flicker": { "min": 2701, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
-            "point_sources": { "min": 0, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
-            "shadows": { "min": 0, "max": 1, "description": "Minimize moving shadows (1 = present)", "operator": "eq" }
+            "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
+            "shadows": { "min": 1, "max": 1, "description": "Minimize moving shadows (1 = present)", "operator": "eq" }
           }
         }
       ]

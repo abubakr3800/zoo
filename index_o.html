@@ -126,25 +126,43 @@ function ruleViolates(rule, value) {
   if (typeof value !== 'number') return false;
 
   switch (rule.operator) {
-    case 'gt': // greater than min
-      return value > (rule.min !== undefined ? rule.min : rule.max);
-    case 'lt': // less than max
-      return value < (rule.max !== undefined ? rule.max : rule.min);
-    case 'eq': // equals min (or max)
+    case 'gt':
+      return rule.max !== undefined && value > rule.max;
+    case 'lt':
+      return rule.min !== undefined && value < rule.min;
+    case 'eq':
       return value === rule.min;
-    case 'in_range': // between min and max
+    case 'in_range':
       return value >= rule.min && value <= rule.max;
     default:
-      const hasMin = typeof rule.min === 'number';
-      const hasMax = typeof rule.max === 'number';
-      if (hasMin && hasMax) return value < rule.min || value > rule.max;
-      if (hasMin && !hasMax) return value < rule.min;
-      if (!hasMin && hasMax) return value > rule.max;
+      if (rule.min !== undefined && rule.max !== undefined) {
+        return value < rule.min || value > rule.max;
+      }
+      if (rule.min !== undefined) {
+        return value < rule.min;
+      }
+      if (rule.max !== undefined) {
+        return value > rule.max;
+      }
       return false;
   }
 }
 
 function updateSimulation() {
+  const cond = lightingData[selectedAnimal]?.lighting_conditions[selectedModeIndex];
+  if (!cond) return;
+
+  // Clamp slider values inside the mode's allowed ranges
+  if (Number(tempSlider.value) < cond.CCT_K.min || Number(tempSlider.value) > cond.CCT_K.max) {
+    tempSlider.value = cond.CCT_K.min;
+  }
+  if (Number(luxSlider.value) < cond.illuminance_lux.min || Number(luxSlider.value) > cond.illuminance_lux.max) {
+    luxSlider.value = cond.illuminance_lux.min;
+  }
+  if (Number(criSlider.value) < cond.CRI_Ra.min || Number(criSlider.value) > cond.CRI_Ra.max) {
+    criSlider.value = cond.CRI_Ra.min;
+  }
+
   const cct = Number(tempSlider.value);
   const lux = Number(luxSlider.value);
   const cri = Number(criSlider.value);
@@ -154,17 +172,15 @@ function updateSimulation() {
   luxSpan.textContent = `${lux} lx`;
   criSpan.textContent = `${cri}`;
 
-  const cond = lightingData[selectedAnimal]?.lighting_conditions[selectedModeIndex];
-  if (!cond) return;
-
+  // Reset styles
   tempSpan.className = "stat-pill";
   luxSpan.className = "stat-pill";
   criSpan.className = "stat-pill";
   glareSelect.classList.remove("border-danger");
 
+  // Check if values are in safe ranges, mark bad if out of range
   let avoidTriggered = false;
 
-  // Safe range checks
   if (cct < cond.CCT_K.min || cct > cond.CCT_K.max) {
     tempSpan.classList.add("value-bad");
     avoidTriggered = true;
@@ -186,13 +202,13 @@ function updateSimulation() {
     criSpan.classList.add("value-ok");
   }
 
-  avoidRulesDiv.innerHTML = "";
-
   // Check avoid rules
+  avoidRulesDiv.innerHTML = "";
   for (const [key, rule] of Object.entries(cond.avoid)) {
     let valueToCheck = null;
     const k = key.toLowerCase();
 
+    // Map keys to values to check
     if (k.includes("blue")) valueToCheck = cct;
     else if (k.includes("lighting_changes") || k.includes("lux")) valueToCheck = lux;
     else if (k.includes("cri") || k.includes("flicker")) valueToCheck = cri;
@@ -203,7 +219,7 @@ function updateSimulation() {
       const p = document.createElement("p");
       p.className = "avoid-rule text-danger";
       p.innerHTML = `<strong>${key}</strong>: ${rule.description} 
-        <span class="meta">(You: ${valueToCheck}, Avoid: ${rule.min ?? '–'}–${rule.max ?? '–'})</span>`;
+        <span class="meta">(You: ${valueToCheck}, Avoid: ${rule.min ?? '-'}–${rule.max ?? '-'})</span>`;
       avoidRulesDiv.appendChild(p);
     }
   }
@@ -212,15 +228,13 @@ function updateSimulation() {
     avoidRulesDiv.innerHTML = `<p class="meta">No avoid patterns triggered.</p>`;
   }
 
-  // Set enclosure image
-  let bgImage = avoidTriggered ? "images/lion/gif/anoyed.gif" : cond.image;
-  enclosure.style.backgroundImage = `url("${bgImage}")`;
-
-  // Apply visual filters
   applyVisualFilters(cct, lux, cri, glareFlag);
+
+  // Set enclosure image: annoyed if avoid rules or out of range, else normal image
+  enclosure.style.backgroundImage = `url("${avoidTriggered ? "images/lion/gif/anoyed.gif" : cond.image}")`;
 }
 
-function populateModes() {
+function populateModes(){
   const list = lightingData[selectedAnimal]?.lighting_conditions ?? [];
   modeSelect.innerHTML = '';
   list.forEach((c, i) => {
@@ -233,7 +247,7 @@ function populateModes() {
   modeSelect.value = 0;
 }
 
-async function loadLightingJSON() {
+async function loadLightingJSON(){
   const res = await fetch('database/db.json');
   lightingData = await res.json();
   animalSelect.innerHTML = '';
@@ -248,18 +262,16 @@ async function loadLightingJSON() {
   updateSimulation();
 }
 
-animalSelect.addEventListener('change', e => { 
-  selectedAnimal = e.target.value; 
-  populateModes(); 
-  updateSimulation(); 
+animalSelect.addEventListener('change', e => {
+  selectedAnimal = e.target.value;
+  populateModes();
+  updateSimulation();
 });
-modeSelect.addEventListener('change', e => { 
-  selectedModeIndex = Number(e.target.value); 
-  updateSimulation(); 
+modeSelect.addEventListener('change', e => {
+  selectedModeIndex = Number(e.target.value);
+  updateSimulation();
 });
-[tempSlider, luxSlider, criSlider, glareSelect].forEach(el => { 
-  el.addEventListener('input', updateSimulation); 
-});
+[tempSlider, luxSlider, criSlider, glareSelect].forEach(el => { el.addEventListener('input', updateSimulation); });
 
 loadLightingJSON();
 </script>
