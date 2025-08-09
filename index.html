@@ -1,145 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zoo Lighting Impact Simulator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zoo Lighting Impact Simulator - Night Study</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; }
+    body { background-color: #121212; }
     .enclosure {
       position: relative;
       width: 100%;
       height: 400px;
       background-size: cover;
       background-position: center;
-      filter: brightness(1) contrast(1) sepia(0);
       border-radius: 10px;
       transition: filter 0.3s ease, background-image 0.3s ease;
     }
-    .overlay-day { background: rgba(255,255,255,0.0); }
-    .overlay-night { background: rgba(0,0,50,0.4); }
-    .overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 10px;
-    }
-
-    /* Light direction visual effect */
-    .enclosure.direct-light::before,
-.enclosure.indirect-light::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  transition: background 0.6s ease;
-}
-
-/* Direct light — daytime (warm golden) */
-.enclosure.direct-light.morning-light::before {
-  background: radial-gradient(circle at 80% 20%, rgba(255, 230, 150, 0.6) 0%, rgba(255, 230, 150, 0.1) 40%, transparent 70%);
-}
-
-/* Direct light — night (cool moonlight) */
-.enclosure.direct-light.night-light::before {
-  background: radial-gradient(circle at 20% 20%, rgba(180, 200, 255, 0.5) 0%, rgba(180, 200, 255, 0.1) 40%, transparent 70%);
-}
-
-/* Indirect light — daytime (warm soft glow) */
-.enclosure.indirect-light.morning-light::before {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 220, 0.4) 0%, rgba(255, 255, 220, 0.15) 50%, transparent 100%);
-}
-
-/* Indirect light — night (cool soft glow) */
-.enclosure.indirect-light.night-light::before {
-  background: radial-gradient(circle at 50% 50%, rgba(200, 220, 255, 0.3) 0%, rgba(200, 220, 255, 0.12) 50%, transparent 100%);
-}
-
+    .text-safe { color: #0f0; }
+    .text-warning { color: #ff0; }
+    .text-danger { color: #f00; }
   </style>
 </head>
-<body class="bg-dark text-white">
+<body class="text-white">
 <div class="container py-4">
-  <h1 class="mb-4 text-center">Zoo Lighting Impact Simulator</h1>
+  <h1 class="mb-4 text-center">Zoo Lighting Impact Simulator (Night Study)</h1>
 
   <div class="row g-4">
     <!-- Simulation Area -->
     <div class="col-md-4">
-      <div id="enclosure" class="enclosure">
-        <div id="overlay" class="overlay overlay-day"></div>
-      </div>
+      <div id="enclosure" class="enclosure bg-dark"></div>
     </div>
 
     <!-- Controls -->
     <div class="col-md-8">
-      <div class="card">
-        <div class="card-body bg-secondary text-white">
+      <div class="card bg-secondary text-white">
+        <div class="card-body">
           <h5>Lighting Controls</h5>
 
           <label class="form-label mt-2">Animal</label>
           <select id="animalSelect" class="form-select">
             <option value="lion">Lion</option>
-            <option value="owl">Owl</option>
           </select>
 
-          <div>
-            <label class="form-label mt-3">Color Temperature (K): 
-              <span id="tempValue">3500</span>
-            </label>
-            <input type="range" min="2000" max="10000" value="3500" step="100" id="tempSlider" class="form-range">
-            <small id="tempReason" class="text-danger"></small>
-          </div>
-          
-          <div>
-            <label class="form-label mt-3">Lux Level: 
-              <span id="luxValue">200</span>
-              </label>
-            <input type="range" min="50" max="1000" value="200" step="10" id="luxSlider" class="form-range">
-            <small id="luxReason" class="text-danger"></small>
-          </div>
-          
-          <div>
-            <label class="form-label mt-3">CRI: 
-              <span id="criValue">90</span>
-            </label>
-            <input type="range" min="60" max="100" value="90" step="1" id="criSlider" class="form-range">
-            <small id="criReason" class="text-danger"></small>
-          </div>
-          
-          <div class="form-check form-switch mt-3">
-            <input class="form-check-input" type="checkbox" id="dayNightToggle">
-            <label class="form-check-label" for="dayNightToggle">Night Mode</label>
-          </div>
+          <label class="form-label mt-2">Mode (Night Activity)</label>
+          <select id="modeSelect" class="form-select">
+            <!-- will populate dynamically -->
+          </select>
 
-          <div class="form-check form-switch mt-2">
-            <input class="form-check-input" type="checkbox" id="glareToggle">
-            <label class="form-check-label" for="glareToggle">Glare</label>
+          <div class="mt-3">
+            <label class="form-label">Color Temperature (K): 
+              <span id="tempValue">0</span>
+            </label>
+            <input type="range" min="1500" max="10000" value="3500" step="100" id="tempSlider" class="form-range">
+            <small id="tempReason"></small>
           </div>
 
           <div class="mt-3">
-            <label class="form-label">Light Direction</label>
-            <select id="lightDirection" class="form-select">
-              <option value="indirect">Indirect Light</option>
-              <option value="direct">Direct Light</option>
-            </select>
-            <small id="directionReason" class="text-muted"></small>
+            <label class="form-label">Lux Level: 
+              <span id="luxValue">0</span>
+            </label>
+            <input type="range" min="0" max="1000" value="200" step="10" id="luxSlider" class="form-range">
+            <small id="luxReason"></small>
           </div>
-          
-          
+
+          <div class="mt-3">
+            <label class="form-label">CRI: 
+              <span id="criValue">0</span>
+            </label>
+            <input type="range" min="60" max="100" value="90" step="1" id="criSlider" class="form-range">
+            <small id="criReason"></small>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Glare</label>
+            <select id="glareSelect" class="form-select">
+              <option value="none">None</option>
+              <option value="present">Present</option>
+            </select>
+            <small id="glareReason"></small>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Behavior Dashboard -->
+  <!-- Avoid Rules -->
   <div class="row mt-4">
     <div class="col">
-      <div class="card bg-secondary text-white">
-        <div class="card-body text-center">
-          <h5>Animal Behavior & Health</h5>
-          <p id="activityLevel" class="mt-2">Activity Level: Normal</p>
-          <p id="healthImpact">Health Impact: Positive</p>
-          <p id="stressLevel">Stress Level: Low</p>
+      <div class="card bg-dark text-white">
+        <div class="card-body">
+          <h5 class="card-title">Avoid Patterns Triggered</h5>
+          <div id="avoidRules"></div>
         </div>
       </div>
     </div>
@@ -147,212 +98,100 @@
 </div>
 
 <script>
-  const animalSelect = document.getElementById('animalSelect');
-  const tempSlider = document.getElementById('tempSlider');
-  const luxSlider = document.getElementById('luxSlider');
-  const criSlider = document.getElementById('criSlider');
-  const dayNightToggle = document.getElementById('dayNightToggle');
-  const glareToggle = document.getElementById('glareToggle');
-//   const lightDirection = document.getElementById('lightDirection');
-  const enclosure = document.getElementById('enclosure');
-  const overlay = document.getElementById('overlay');
+let lightingData = {};
+let selectedAnimal = "lion";
+let selectedMode = null;
 
-  const activityLevel = document.getElementById('activityLevel');
-  const healthImpact = document.getElementById('healthImpact');
-  const stressLevel = document.getElementById('stressLevel');
+const tempSlider = document.getElementById('tempSlider');
+const luxSlider = document.getElementById('luxSlider');
+const criSlider = document.getElementById('criSlider');
+const glareSelect = document.getElementById('glareSelect');
 
-  const animalSettings = {
-  lion: {
-    night: {
-      // CCT effects
-      cct: {
-        calming: { 
-          min: 2000, max: 3000, 
-          effect: "Calming and reducing stress",
-          image: "images/lion/gif/sleeping.jpg" 
-        },
-        active: { 
-          min: 3001, max: 4000, 
-          effect: "Promotes normal activities",
-          image: "images/lion/gif/playing.gif" 
-        },
-        angry: { 
-          min: 4001, max: 5000, 
-          effect: "May cause alertness and restlessness",
-          image: "images/lion/gif/anoyed.gif" 
-        }
-      },
-      // Lux activity mapping
-      lux: {
-        sleeping: { 
-          min: 0, max: 50, 
-          activity: "Sleeping", 
-          stress: "Low",
-          image: "images/lion/gif/sleeping.jpg" 
-        },
-        lazy: { 
-          min: 51, max: 300, 
-          activity: "Lazy", 
-          stress: "Low",
-          image: "images/lion/gif/sleeping.jpg" 
-        },
-        exploring: { 
-          min: 301, max: 500, 
-          activity: "Walking and exploring", 
-          stress: "Medium",
-          image: "images/lion/gif/playing.gif" 
-        },
-        eating: { 
-          min: 401, max: 600, 
-          activity: "Eating", 
-          stress: "Medium",
-          image: "images/lion/gif/eating.gif" 
-        },
-        annoyed: { 
-          min: 601, max: 1000, 
-          activity: "Annoyed", 
-          stress: "High",
-          image: "images/lion/gif/anoyed.gif" 
-        }
-      }
-    }
-  }
-};
-
-
-  // Value display elements
 const tempValue = document.getElementById('tempValue');
 const luxValue = document.getElementById('luxValue');
 const criValue = document.getElementById('criValue');
 
-// Reason text elements
-const tempReason = document.getElementById('tempReason');
-const luxReason = document.getElementById('luxReason');
-const criReason = document.getElementById('criReason');
-const lightDirection = document.getElementById('lightDirection');
-const directionReason = document.getElementById('directionReason');
+async function loadLightingData() {
+  const res = await fetch("database/db.json");
+  lightingData = await res.json();
+
+  const modeSelect = document.getElementById('modeSelect');
+  modeSelect.innerHTML = "";
+  lightingData[selectedAnimal].lighting_conditions.forEach((cond, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = cond.activity;
+    modeSelect.appendChild(opt);
+  });
+  selectedMode = 0;
+  updateSimulation();
+}
 
 function updateSimulation() {
-  const animal = animalSelect.value;
-  const temp = parseInt(tempSlider.value); // CCT
+  const cond = lightingData[selectedAnimal].lighting_conditions[selectedMode];
+  const temp = parseInt(tempSlider.value);
   const lux = parseInt(luxSlider.value);
   const cri = parseInt(criSlider.value);
-  const glare = glareToggle.checked;
-  const direction = lightDirection.value;
+  const glare = glareSelect.value;
 
-  const settings = animalSettings[animal].night;
-
-  // === Show live values ===
   tempValue.textContent = temp;
   luxValue.textContent = lux;
   criValue.textContent = cri;
 
-  // === Apply lighting visual filter ===
-  let warmthRatio = (temp - 2000) / (5000 - 2000);
-  let hueShift = warmthRatio < 0.5
-    ? -40 * (0.5 - warmthRatio) * 2
-    : 40 * (warmthRatio - 0.5) * 2;
-  let brightness = lux / 300;
-  if (glare) brightness += 0.3;
-  let saturation = ((cri - 60) / 40) * 2;
-  enclosure.style.filter = `
-    brightness(${brightness})
-    contrast(1)
-    hue-rotate(${hueShift}deg)
-    saturate(${saturation})
-  `;
+  const avoidDiv = document.getElementById('avoidRules');
+  avoidDiv.innerHTML = "";
 
-  // === Apply direction CSS ===
-  enclosure.classList.remove("direct-light", "indirect-light");
-  enclosure.classList.add(direction + "-light", "night-light");
+  // Reset colors
+  tempValue.className = "";
+  luxValue.className = "";
+  criValue.className = "";
 
-  let finalImage = "";
-  let activityText = "";
-  let stressText = "";
+  // Check avoid rules
+  for (const [key, obj] of Object.entries(cond.avoid)) {
+    let violated = false;
 
-  // =========================
-  // PRIORITY RULES
-  // =========================
+    if (key.toLowerCase().includes("cct") || key.toLowerCase().includes("blue")) {
+      if (temp < obj.min || temp > obj.max) violated = true;
+    }
+    if (key.toLowerCase().includes("lux") || key.toLowerCase().includes("lighting_changes")) {
+      if (lux < obj.min || lux > obj.max) violated = true;
+    }
+    if (key.toLowerCase().includes("flicker") || key.toLowerCase().includes("cri")) {
+      if (cri < obj.min || cri > obj.max) violated = true;
+    }
+    if (key.toLowerCase().includes("glare") || key.toLowerCase().includes("point_sources")) {
+      if (glare === "present") violated = true;
+    }
 
-  // CCT > 4000 → annoyed regardless of lux
-  if (temp > 4000) {
-    finalImage = settings.lux.annoyed.image;
-    activityText = settings.lux.annoyed.activity;
-    stressText = settings.lux.annoyed.stress;
-  }
+    if (violated) {
+      const p = document.createElement("p");
+      p.textContent = `${key}: ${obj.description}`;
+      avoidDiv.appendChild(p);
 
-  // Lux 601-1000 → Annoyed always
-  else if (lux >= 601 && lux <= 1000) {
-    finalImage = settings.lux.annoyed.image;
-    activityText = settings.lux.annoyed.activity;
-    stressText = settings.lux.annoyed.stress;
-  }
-
-  // Lux 0-50 → sleeping (always)
-  else if (lux >= 0 && lux <= 50) {
-    finalImage = settings.lux.sleeping.image;
-    activityText = settings.lux.sleeping.activity;
-    stressText = settings.lux.sleeping.stress;
-  }
-
-  // Lux 51-300 → Lazy if CCT in 3000-4000, else annoyed
-  else if (lux >= 51 && lux <= 300) {
-    if (temp >= 3000 && temp <= 4000) {
-      finalImage = settings.lux.lazy.image;
-      activityText = settings.lux.lazy.activity;
-      stressText = settings.lux.lazy.stress;
-    } else {
-      finalImage = settings.lux.annoyed.image;
-      activityText = settings.lux.annoyed.activity;
-      stressText = settings.lux.annoyed.stress;
+      // Highlight affected value in red
+      if (key.toLowerCase().includes("cct") || key.toLowerCase().includes("blue")) tempValue.className = "text-danger";
+      if (key.toLowerCase().includes("lux") || key.toLowerCase().includes("lighting_changes")) luxValue.className = "text-danger";
+      if (key.toLowerCase().includes("flicker") || key.toLowerCase().includes("cri")) criValue.className = "text-danger";
+      if (key.toLowerCase().includes("glare") || key.toLowerCase().includes("point_sources")) glareSelect.className = "form-select border border-danger";
     }
   }
-
-  // Lux 301-500 → Exploring if CCT 3000-4000, else annoyed
-  else if (lux >= 301 && lux <= 500) {
-    if (temp >= 3000 && temp <= 4000) {
-      finalImage = settings.lux.exploring.image;
-      activityText = settings.lux.exploring.activity;
-      stressText = settings.lux.exploring.stress;
-    } else {
-      finalImage = settings.lux.annoyed.image;
-      activityText = settings.lux.annoyed.activity;
-      stressText = settings.lux.annoyed.stress;
-    }
-  }
-
-  // Lux 501-600 → Eating if CCT 3000-4000, else annoyed
-  else if (lux >= 501 && lux <= 600) {
-    if (temp >= 3000 && temp <= 4000) {
-      finalImage = settings.lux.eating.image;
-      activityText = settings.lux.eating.activity;
-      stressText = settings.lux.eating.stress;
-    } else {
-      finalImage = settings.lux.annoyed.image;
-      activityText = settings.lux.annoyed.activity;
-      stressText = settings.lux.annoyed.stress;
-    }
-  }
-
-  // === CRI, glare, direct light penalties ===
-  if (cri < 80 || cri > 90 || glare || direction === "direct") {
-    stressText = "High";
-    activityText += " (Disturbed)";
-  }
-
-  // === Update UI ===
-  enclosure.style.backgroundImage = `url(${finalImage})`;
-  activityLevel.textContent = `Activity Level: ${activityText}`;
-  healthImpact.textContent = `CCT Impact: ${temp}K`;
-  stressLevel.textContent = `Stress Level: ${stressText}`;
 }
 
+document.getElementById('animalSelect').addEventListener('change', e => {
+  selectedAnimal = e.target.value;
+  loadLightingData();
+});
 
-  [animalSelect, tempSlider, luxSlider, criSlider, dayNightToggle, glareToggle, lightDirection].forEach(el => {
-    el.addEventListener('input', updateSimulation);
-  });
-
+document.getElementById('modeSelect').addEventListener('change', e => {
+  selectedMode = parseInt(e.target.value);
   updateSimulation();
+});
+
+[tempSlider, luxSlider, criSlider, glareSelect].forEach(el => {
+  el.addEventListener('input', updateSimulation);
+});
+
+loadLightingData();
 </script>
 </body>
 </html>
