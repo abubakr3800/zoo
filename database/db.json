@@ -1,5 +1,4 @@
-[
-    {
+{
     "lion": {
       "lighting_conditions": [
         {
@@ -9,7 +8,14 @@
           "CRI_Ra": { "recommended": 90, "minimum": 80 },
           "glare": "Use diffused/indirect lighting, avoid direct beams into eyes",
           "flicker": { "percent": "< 1%", "PstLM": "≤ 1" },
-          "notes": "Dimmable to 30–100% for behavior control"
+          "notes": "Dimmable to 30–100% for behavior control",
+          "avoid": {
+            "lighting_changes": { "min": 0, "max": 1000, "description": "Sudden high-contrast changes" },
+            "flicker": { "min": 0, "max": "visible threshold", "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 0, "description": "Avoid at night" },
+            "point_sources": { "min": 0, "max": "direct eye exposure", "description": "Avoid intense point sources aimed at eyes" },
+            "shadows": { "min": 0, "max": "moving shadows", "description": "Minimize moving shadows" }
+          }
         },
         {
           "activity": "Eating / feeding / veterinary checks",
@@ -17,7 +23,14 @@
           "CCT_K": { "min": 3500, "max": 4500 },
           "CRI_Ra": { "recommended": 90 },
           "glare": "Localized task lighting (hooded, downward) to minimize glare",
-          "flicker": "Avoid sudden bright flashes; gradual ramp up/down"
+          "flicker": "Avoid sudden bright flashes; gradual ramp up/down",
+          "avoid": {
+            "lighting_changes": { "min": 0, "max": 1000, "description": "Sudden high-contrast changes" },
+            "flicker": { "min": 0, "max": "visible threshold", "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 0, "description": "Avoid at night" },
+            "point_sources": { "min": 0, "max": "direct eye exposure", "description": "Avoid intense point sources aimed at eyes" },
+            "shadows": { "min": 0, "max": "moving shadows", "description": "Minimize moving shadows" }
+          }
         },
         {
           "activity": "Sleeping / night",
@@ -25,16 +38,16 @@
           "CCT_K": { "min": 1800, "max": 2700, "note": "warm/amber/red" },
           "CRI_Ra": "Not important at night",
           "glare": "Provide dark retreat areas (0 lx if possible)",
-          "flicker": "Strictly avoid blue-rich light; use low-angle shielded lights"
+          "flicker": "Strictly avoid blue-rich light; use low-angle shielded lights",
+          "avoid": {
+            "lighting_changes": { "min": 0, "max": 1000, "description": "Sudden high-contrast changes" },
+            "flicker": { "min": 0, "max": "visible threshold", "description": "Any perceptible flicker frequencies/indices" },
+            "blue_rich_night_light": { "min": 0, "max": 0, "description": "Avoid at night" },
+            "point_sources": { "min": 0, "max": "direct eye exposure", "description": "Avoid intense point sources aimed at eyes" },
+            "shadows": { "min": 0, "max": "moving shadows", "description": "Minimize moving shadows" }
+          }
         }
-      ],
-      "avoid_patterns": {
-        "lighting_changes": "Sudden high-contrast changes (0 → 1000 lx)",
-        "flicker": "Any perceptible flicker frequencies/indices",
-        "blue_rich_night_light": "Avoid at night",
-        "point_sources": "Avoid intense point sources aimed at eyes",
-        "shadows": "Minimize moving shadows"
-      }
+      ]
     }
   }
-]
+  
