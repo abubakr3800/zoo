@@ -230,7 +230,7 @@ if (!avoidTriggered) {
 // =======================
 let bgImage = cond.image;
 if (avoidTriggered) {
-  bgImage = "images/lion/gif/anoyed.gif";
+  bgImage = cond.avoid.image;
 }
 enclosure.style.backgroundImage = `url("${bgImage}")`;
 

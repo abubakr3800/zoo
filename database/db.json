@@ -11,6 +11,7 @@
           "image": "images/lion/gif/playing.gif",
           "notes": "Dimmable to 30–100% for behavior control",
           "avoid": {
+            "image": "images/lion/gif/anoyed.gif",
             "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
@@ -27,6 +28,7 @@
           "flicker": { "min": 1, "max": 1000 },
           "image": "images/lion/gif/eating.gif",
           "avoid": {
+            "image": "images/lion/gif/anoyed.gif",
             "lighting_changes": { "min": 801, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
@@ -43,6 +45,7 @@
           "flicker": { "min": 1, "max": 1000 },
           "image": "images/lion/gif/sleeping.jpg",
           "avoid": {
+            "image": "images/lion/gif/anoyed.gif",
             "lighting_changes": { "min": 51, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
             "flicker": { "min": 2701, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
@@ -56,37 +59,24 @@
       "lighting_conditions": [
         {
           "activity": "Flying/Active",
-          "illuminance_lux": { "min": 500, "max": 1000 },
+          "illuminance_lux": { "min": 500, "max": 800 },
           "CCT_K": { "min": 5000, "max": 6500 },
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Use diffused/indirect lighting, avoid direct beams into eyes",
           "flicker": { "min": 1, "max": 3333 },
-          "image": "images/lion/gif/playing.gif",
+          "image": "images/parrot/fly/happy.jpeg",
           "notes": "Dimmable to 30–100% for behavior control",
           "avoid": {
-            "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
+            "image": "images/parrot/fly/sad.jpeg",
+            "lighting_changes": { "min": 801, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
             "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
             "shadows": { "min": 1, "max": 1, "description": "Minimize moving shadows (1 = present)", "operator": "eq" }
           }
-        },{
-          "activity": "Visitor viewing",
-          "illuminance_lux": { "min": 300, "max": 800 },
-          "CCT_K": { "min": 4000, "max": 6500 },
-          "CRI_Ra": { "min": 90, "max": 100 },
-          "glare": "Use diffused/indirect lighting, avoid direct beams into eyes",
-          "flicker": { "min": 1, "max": 3333 },
-          "image": "images/lion/gif/playing.gif",
-          "notes": "Dimmable to 30–100% for behavior control",
-          "avoid": {
-            "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
-            "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
-            "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
-            "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
-            "shadows": { "min": 1, "max": 1, "description": "Minimize moving shadows (1 = present)", "operator": "eq" }
-          }
-        },
+        }
+        
+        ,
         {
           "activity": "Eating / feeding / veterinary checks",
           "illuminance_lux": { "min": 300, "max": 500 },
@@ -94,9 +84,10 @@
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Localized task lighting (hooded, downward) to minimize glare",
           "flicker": { "min": 1, "max": 3333 },
-          "image": "images/lion/gif/eating.gif",
+          "image": "images/parrot/eat/happy.jpeg",
           "avoid": {
-            "lighting_changes": { "min": 801, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
+            "image": "images/parrot/eat/sad.jpeg",
+            "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
             "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
@@ -110,9 +101,10 @@
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Provide dark retreat areas (0 lx if possible)",
           "flicker": { "min": 1, "max": 3333 },
-          "image": "images/lion/gif/sleeping.jpg",
+          "image": "images/parrot/sleep/happy.jpeg",
           "avoid": {
-            "lighting_changes": { "min": 51, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
+            "image": "images/parrot/sleep/sad.jpeg",
+            "lighting_changes": { "min": 31, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
             "flicker": { "min": 2701, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
             "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
@@ -130,10 +122,11 @@
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Use diffused/indirect lighting, avoid direct beams into eyes",
           "flicker": { "min": 1, "max": 10000 },
-          "image": "images/lion/gif/playing.gif",
+          "image": "images/giraffe/walk/happy.png",
           "notes": "Dimmable to 30–100% for behavior control",
           "avoid": {
-            "lighting_changes": { "min": 501, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
+            "image": "images/giraffe/walk/sad.png",
+            "lighting_changes": { "min": 301, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
             "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
@@ -147,9 +140,10 @@
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Localized task lighting (hooded, downward) to minimize glare",
           "flicker": { "min": 1, "max": 10000 },
-          "image": "images/lion/gif/eating.gif",
+          "image": "images/giraffe/eat/happy.png",
           "avoid": {
-            "lighting_changes": { "min": 801, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
+            "image": "images/giraffe/eat/sad.png",
+            "lighting_changes": { "min": 601, "max": 1000, "description": "Sudden high-contrast changes", "operator": "in_range" },
             "flicker": { "min": 1000, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
             "point_sources": { "min": 1, "max": 1, "description": "Avoid intense point sources aimed at eyes (1 = present)", "operator": "eq" },
@@ -163,8 +157,9 @@
           "CRI_Ra": { "min": 90, "max": 100 },
           "glare": "Provide dark retreat areas (0 lx if possible)",
           "flicker": { "min": 1, "max": 10000 },
-          "image": "images/lion/gif/sleeping.jpg",
+          "image": "images/giraffe/sleep/happy.png",
           "avoid": {
+            "image": "images/giraffe/sleep/sad.jpeg",
             "lighting_changes": { "min": 51, "max": 500, "description": "Sudden high-contrast changes at night", "operator": "gt" },
             "flicker": { "min": 2701, "max": 10000, "description": "Any perceptible flicker frequencies/indices", "operator": "in_range" },
             "blue_rich_night_light": { "max": 3000, "description": "Avoid cool, blue-rich light at night", "operator": "gt" },
